@@ -24,7 +24,7 @@ def generar_puntos_control(img_path, puntos_salida):
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-    np.savetxt(puntos_salida, np.array(puntos, dtype=int), fmt="%d")
+    np.savetxt(puntos_salida, np.array(puntos, dtype=int), fmt="%d", delimiter=", ")
     
     print(f"Puntos guardados en {puntos_salida}")
     return np.array(puntos)
