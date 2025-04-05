@@ -20,13 +20,11 @@ def open_folder(folder_1, folder_2):
     return images_1, images_2
 
 def save_frames_to_folder(frames, output_frames_dir):
-    # Crear la carpeta para guardar los frames si no existe
     if not os.path.exists(output_frames_dir):
         os.makedirs(output_frames_dir)
 
     for i in range(len(frames)):
         frame = frames[i]
-        # Guardar el frame como imagen en la carpeta
         frame_output_path = os.path.join(output_frames_dir, f"frame_{i:04d}.png")
         frame.save(frame_output_path, format="PNG")
         

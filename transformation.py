@@ -118,9 +118,3 @@ def smooth_image(image, kernel_size=5):
 # Función para interpolar entre dos conjuntos de puntos
 def interpolate_points(src_points, dst_points, t):
     return (1 - t) * src_points + t * dst_points
-
-# Función para mostrar la imagen
-def show_image(image):
-    plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
-    plt.axis('off')
-    plt.show()
