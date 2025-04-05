@@ -58,7 +58,7 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
     clips = [
         ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
         *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in frames_transicion],  # Transición
-        ImageClip(np.array(img_final), duration=tiempo_exposicion),  # Imagen final
+        ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  # Imagen final
         *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in reversed(frames_transicion)],  # Transición inversa,
         ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
     ]
@@ -97,7 +97,7 @@ generar_transicion_ojos(
     imagen_ojos_cerrados,
     puntos_abiertos,
     puntos_cerrados,
-    num_frames=6,
-    fps=24,
+    num_frames=10,
+    fps=60,
     output_video="parpadeo_suave.mp4"
 )
