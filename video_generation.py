@@ -29,7 +29,6 @@ def generar_puntos_control(img_path, puntos_salida):
     print(f"Puntos guardados en {puntos_salida}")
     return np.array(puntos)
 
-
 def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos_final, 
                            num_frames=10, fps=24, tiempo_exposicion=0.5, 
                            output_video="transicion_ojos.mp4"):

@@ -32,9 +32,6 @@ def save_frames_to_folder(frames, output_frames_dir):
         
     print(f"Frames guardados en la carpeta: {output_frames_dir}")
 
-
-
-
 def create_fade_transition_frames(deformed_images, deformed_images_2):
     """
     Crea los frames de transición entre dos secuencias de imágenes.
@@ -83,24 +80,3 @@ def create_fade_transition_frames(deformed_images, deformed_images_2):
         frames.append(frame)
 
     return frames
-
-
-"""
-
-# Rutas de las carpetas y salida de los frames
-deformed_images_dir = "deformed_images"
-deformed_images_2_dir = "deformed_images_2"
-output_frames_dir = "transition_frames"
-
-# Cargar las imágenes desde las carpetas
-deformed_images, deformed_images_2 = open_folder(deformed_images_dir, deformed_images_2_dir)
-
-# Invertir el orden de los elementos de deformed_images_2
-deformed_images_2 = deformed_images_2[::-1]
-
-# Crear los frames
-frames= create_fade_transition_frames(deformed_images, deformed_images_2)
-save_frames_to_folder(frames, output_frames_dir)
-
-
-"""

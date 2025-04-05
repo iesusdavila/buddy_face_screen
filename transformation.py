@@ -1,9 +1,7 @@
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
-import os
 from scipy.spatial import Delaunay
-from joblib import Parallel, delayed
+import numpy as np
 
 # Función para leer los puntos desde un archivo .txt
 def read_points_from_file(filename):
@@ -16,11 +14,6 @@ def read_points_from_file(filename):
     except Exception as e:
         print(f"Error al leer el archivo {filename}: {e}")
     return np.array(points)
-
-# Función para aumentar la resolución de los puntos de control
-import numpy as np
-import cv2
-from scipy.spatial import Delaunay
 
 def generate_fine_grid(src_points, dst_points, density=3):
     """
@@ -42,7 +35,6 @@ def generate_fine_grid(src_points, dst_points, density=3):
     new_dst_points = np.vstack([dst_points, new_dst_points])
     
     return new_src_points, new_dst_points
-
 
 def apply_transformation(image, src_points, dst_points, density=3):
     """
@@ -99,7 +91,6 @@ def fill_holes(image):
     filled_image = np.dstack((rgb_filled, image[:, :, 3]))
     return filled_image
 
-
 # Función para suavizar la imagen usando un filtro gaussiano
 def smooth_image(image, kernel_size=5):
     """
@@ -124,7 +115,6 @@ def smooth_image(image, kernel_size=5):
     result = np.dstack((smoothed_image, alpha_channel))
     return result
 
-
 # Función para interpolar entre dos conjuntos de puntos
 def interpolate_points(src_points, dst_points, t):
     return (1 - t) * src_points + t * dst_points
@@ -134,60 +124,3 @@ def show_image(image):
     plt.imshow(cv2.cvtColor(image, cv2.COLOR_BGRA2RGBA))
     plt.axis('off')
     plt.show()
-
-
-"""
-# Cargar la imagen con canal alfa
-image_path = '6.png'  # Asegúrate de que la imagen tenga un canal alfa
-image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-
-# Verificar si la imagen se cargó correctamente
-if image is None:
-    print(f"Error: No se pudo cargar la imagen {image_path}. Verifica el path.")
-elif image.shape[2] != 4:
-    print("Error: La imagen no tiene un canal alfa (RGBA). Usa una imagen con fondo transparente.")
-else:
-    print(f"Imagen {image_path} cargada exitosamente.")
-
-    # Leer los paths desde los archivos .txt
-    src_filename = '6_points.txt'  # Puntos de referencia
-    dst_filename = '2_points.txt'  # Puntos destino
-    src_points = read_points_from_file(src_filename)
-    dst_points = read_points_from_file(dst_filename)
-
-    # Verificar si los puntos fueron leídos correctamente
-    if len(src_points) == 0 or len(dst_points) == 0:
-        print("Error: No se pudieron leer los puntos desde los archivos.")
-    else:
-        # Crear un directorio para guardar las imágenes generadas
-        output_dir = 'deformed_images'
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-        
-        # Generar imágenes deformadas para diferentes valores de interpolación (t = 0, 0.2, 0.4, ..., 1)
-        num_images = 6  # Número de imágenes a generar
-        for i in range(num_images):
-            t = i / (num_images - 1)  # Factor de interpolación entre 0 y 1
-            print(f"Generando imagen para t = {t}")
-            
-            # Interpolamos los puntos
-            interpolated_points = interpolate_points(src_points, dst_points, t)
-            
-            # Deformamos la imagen usando los puntos interpolados
-            deformed_image = apply_transformation(image, src_points, interpolated_points)
-            
-            #Rellenar huecos
-            holes_filled = fill_holes(deformed_image)
-
-            # Suavizar la imagen resultante
-            smoothed_image = smooth_image(holes_filled)
-            #smoothed_image = deformed_image
-
-            # Guardamos la imagen deformada con transparencia
-            output_filename = os.path.join(output_dir, f"deformed_{t:.2f}.png")
-            cv2.imwrite(output_filename, smoothed_image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
-            print(f"Imagen guardada como {output_filename}")
-        
-        print("Generación de imágenes completada.")
-
-        """
