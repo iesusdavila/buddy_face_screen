@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from united_morph_transition import morph_transition
+from united_morph_transition import MorphTransition
 from transition import save_frames_to_folder
 from moviepy import ImageClip, concatenate_videoclips
 import os
@@ -39,13 +39,13 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
     img_final = cv2.cvtColor(img_final, cv2.COLOR_BGRA2RGBA)
 
     # Generar frames de transición
-    frames_transicion = morph_transition(
+    frames_transicion = MorphTransition(
         imagen_inicial,
         imagen_final,
         puntos_inicial,
         puntos_final,
         num_images=num_frames
-    )
+    ).morph_transition()
 
     # Guardar frames en una carpeta
     save_frames_to_folder(frames_transicion, "imagenes_transicion/parpadear")
