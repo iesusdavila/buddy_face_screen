@@ -1,11 +1,7 @@
 import cv2
-import os
-import sys
 import numpy as np
 from scipy.spatial import Delaunay
 from PIL import Image
-
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 class MorphTransition:
     def __init__(self, src_image_path, dst_image_path, src_filename, dst_filename, num_images):
