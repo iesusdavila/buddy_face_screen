@@ -1,9 +1,19 @@
 import cv2
 import numpy as np
 from united_morph_transition import MorphTransition
-from transition import save_frames_to_folder
 from moviepy import ImageClip, concatenate_videoclips
 import os
+
+def save_frames_to_folder(frames, output_frames_dir):
+    if not os.path.exists(output_frames_dir):
+        os.makedirs(output_frames_dir)
+
+    for i in range(len(frames)):
+        frame = frames[i]
+        frame_output_path = os.path.join(output_frames_dir, f"frame_{i:04d}.png")
+        frame.save(frame_output_path, format="PNG")
+        
+    print(f"Frames guardados en la carpeta: {output_frames_dir}")
 
 def generar_puntos_control(img_path, puntos_salida):
     """
