@@ -1,23 +1,5 @@
 import os
 from PIL import Image
-import numpy as np
-
-def open_folder(folder_1, folder_2):
-    """
-    Carga las imágenes de dos carpetas y las convierte en arreglos NumPy.
-    """
-    def load_images(folder):
-        images = []
-        for file_name in sorted(os.listdir(folder)):
-            if file_name.endswith((".png", ".jpg")):
-                image_path = os.path.join(folder, file_name)
-                img = Image.open(image_path).convert("RGBA")  # Asegúrate de que sea RGBA
-                images.append(np.array(img))
-        return images
-
-    images_1 = load_images(folder_1)
-    images_2 = load_images(folder_2)
-    return images_1, images_2
 
 def save_frames_to_folder(frames, output_frames_dir):
     if not os.path.exists(output_frames_dir):

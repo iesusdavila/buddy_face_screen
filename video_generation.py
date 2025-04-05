@@ -47,7 +47,6 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
         num_images=num_frames
     )
 
-    print(frames_transicion)
     # Guardar frames en una carpeta
     save_frames_to_folder(frames_transicion, "imagenes_transicion/parpadear")
 
@@ -55,7 +54,6 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
     duracion_transicion = len(frames_transicion)/fps
     frame_duration = 1/fps
 
-    print(img_inicial)
     # Crear clipsimg_inicial
     clips = [
         ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
