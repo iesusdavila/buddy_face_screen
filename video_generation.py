@@ -41,14 +41,12 @@ def generar_puntos_control(img_path, puntos_salida):
 
 def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos_final, 
                            num_frames=10, fps=24, tiempo_exposicion=0.5, 
-                           output_video="transicion_ojos.mp4"):
-    # Cargar imágenes originales
+                           output_video=None, folder_frames=None):
     img_inicial = cv2.imread(imagen_inicial, cv2.IMREAD_UNCHANGED)
     img_inicial = cv2.cvtColor(img_inicial, cv2.COLOR_BGRA2RGBA)
     img_final = cv2.imread(imagen_final, cv2.IMREAD_UNCHANGED)
     img_final = cv2.cvtColor(img_final, cv2.COLOR_BGRA2RGBA)
 
-    # Generar frames de transición
     frames_transicion = MorphTransition(
         imagen_inicial,
         imagen_final,
@@ -57,45 +55,42 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
         num_images=num_frames
     ).morph_transition()
 
-    # Guardar frames en una carpeta
-    save_frames_to_folder(frames_transicion, "imagenes_transicion/parpadear")
+    if folder_frames is not None:
+        save_frames_to_folder(frames_transicion, folder_frames)
 
-    # Calcular duraciones
-    duracion_transicion = len(frames_transicion)/fps
-    frame_duration = 1/fps
+    if output_video is not None:
+        duracion_transicion = len(frames_transicion)/fps
+        frame_duration = 1/fps
 
-    # Crear clipsimg_inicial
-    clips = [
-        ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
-        *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in frames_transicion],  # Transición
-        ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  # Imagen final
-        *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in reversed(frames_transicion)],  # Transición inversa,
-        ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
-    ]
+        clips = [
+            ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
+            *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in frames_transicion],  # Transición
+            ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  # Imagen final
+            *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in reversed(frames_transicion)],  # Transición inversa,
+            ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
+        ]
 
-    # Ensamblar video
-    video_final = concatenate_videoclips(clips, method="compose")
-    
-    # Escribir archivo
-    video_final.write_videofile(
-        output_video,
-        fps=fps,
-        codec="libx264",
-        audio_codec="aac",
-        logger=None
-    )
+        video_final = concatenate_videoclips(clips, method="compose")
+        
+        video_final.write_videofile(
+            output_video,
+            fps=fps,
+            codec="libx264",
+            audio_codec="aac",
+            logger=None
+        )
 
-    print(f"Video generado: {output_video}\nDuración total: {video_final.duration:.2f}s")
-    return video_final
+        print(f"Video generado: {output_video}\nDuración total: {video_final.duration:.2f}s")
 
-# Configuración
 imagen_ojos_abiertos = "./imgs/normal_ojos_abiertos.png"
 imagen_ojos_cerrados = "./imgs/normal_ojos_cerrados.png"
 
 puntos_abiertos = os.path.join("puntos/puntos_abiertos.txt")
 puntos_cerrados = os.path.join("puntos/puntos_cerrados.txt")
 
-# Generar puntos de control (ejecutar solo una vez)
+name_output_video = "parpadeo_suave.mp4"
+folder_frames = "imagenes_transicion/parpadear"
+
 if not os.path.exists(puntos_abiertos):
     generar_puntos_control(imagen_ojos_abiertos, puntos_abiertos)
 
@@ -109,5 +104,6 @@ generar_transicion_ojos(
     puntos_cerrados,
     num_frames=10,
     fps=60,
-    output_video="parpadeo_suave.mp4"
+    output_video=name_output_video,
+    folder_frames=folder_frames
 )
