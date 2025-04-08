@@ -9,6 +9,7 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Bool
 from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
 import glob
 from ament_index_python.packages import get_package_share_directory
 
@@ -54,6 +55,8 @@ class VideoSynchronizer(Node):
             '/stt_terminado',
             self.stt_callback,
             10)
+
+        self.cv_bridge = CvBridge()
 
         self.face_screen = self.create_publisher(Image, '/face_screen', 10)
         
@@ -133,7 +136,6 @@ class VideoSynchronizer(Node):
         # Si TTS está activo, animar la boca
         # Valores configurables para el control de la animación
         mouth_cycle_time = 1.0  # Duración de un ciclo completo de habla (más lento)
-        pause_ratio = 0.3      # Proporción del tiempo en que la boca permanece abierta/cerrada
         
         # Calcular en qué parte del ciclo estamos (valor entre 0 y 1)
         current_time = time.time()
@@ -173,10 +175,9 @@ class VideoSynchronizer(Node):
     
     def render_loop(self):
         """Bucle principal de renderizado que combina ojos y boca"""
-        # window_name = "Avatar Animation"
-        # cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+        rate = self.create_rate(30) 
         
-        while self.running:
+        while self.running and rclpy.ok():
             # Obtener estados actuales
             eyes_state = self.get_eyes_state()
             eyes_frame = self.get_current_eye_frame(eyes_state)
@@ -188,27 +189,23 @@ class VideoSynchronizer(Node):
             # Guardar el frame actual para posible grabación
             self.current_frame = combined_frame
             
-            # Mostrar el frame
-            display_frame = cv2.cvtColor(combined_frame, cv2.COLOR_RGBA2BGRA)
+            ros_frame = cv2.cvtColor(combined_frame, cv2.COLOR_RGBA2BGR)
             
-            img = Image()
-            img.header.stamp = self.get_clock().now().to_msg()
-            img.header.frame_id = "avatar"
-            img.height, img.width = display_frame.shape[:2]
-            img.encoding = "bgra8"
-            img.is_bigendian = 0
-            img.step = img.width * 4
-            img.data = display_frame.tobytes()
-            self.face_screen.publish(img)
-            # cv2.imshow(window_name, display_frame)
+            # Convertir a mensaje de imagen ROS
+            try:
+                img_msg = self.cv_bridge.cv2_to_imgmsg(ros_frame, encoding="bgr8")
+                img_msg.header.stamp = self.get_clock().now().to_msg()
+                img_msg.header.frame_id = "face_frame"
+                img_msg.encoding = "bgr8"
+                
+                # Publicar la imagen
+                self.face_screen.publish(img_msg)
+                self.get_logger().debug('Frame publicado en face_screen')
+            except Exception as e:
+                self.get_logger().error(f'Error al publicar imagen: {str(e)}')
             
-            # # Salir si se presiona 'q'
-            # if cv2.waitKey(1) & 0xFF == ord('q'):
-            #     self.running = False
-            #     break
-            
-            # Control de FPS
-            time.sleep(1/30)  # 30 FPS aproximadamente
+            # Control de FPS usando rate.sleep() de ROS
+            rate.sleep()
     
     def shutdown(self):
         """Limpia los recursos antes de cerrar"""
