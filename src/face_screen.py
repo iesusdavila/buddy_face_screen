@@ -52,8 +52,8 @@ class VideoSynchronizer(Node):
         
         self.tts_subscription = self.create_subscription(
             Bool,
-            '/stt_terminado',
-            self.stt_callback,
+            '/audio_playing',
+            self.audio_playing_callback,
             10)
 
         self.cv_bridge = CvBridge()
@@ -79,7 +79,7 @@ class VideoSynchronizer(Node):
             
         return frames
     
-    def stt_callback(self, msg):
+    def audio_playing_callback(self, msg):
         """Callback para el topic /stt_terminado"""
         self.tts_active = msg.data 
         self.get_logger().info(f'TTS estado: {"activo" if msg.data else "inactivo"}')
