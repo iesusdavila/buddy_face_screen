@@ -64,9 +64,9 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
 
         clips = [
             ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
-            *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in frames_transicion],  # Transición
+            *[ImageClip(np.array(frame), duration=frame_duration) for frame in frames_transicion],  # Transición
             ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  # Imagen final
-            *[ImageClip(np.array(frame), duration=frame_duration/2) for frame in reversed(frames_transicion)],  # Transición inversa,
+            *[ImageClip(np.array(frame), duration=frame_duration) for frame in reversed(frames_transicion)],  # Transición inversa,
             ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
         ]
 
@@ -82,27 +82,30 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
 
         print(f"Video generado: {output_video}\nDuración total: {video_final.duration:.2f}s")
 
-imagen_ojos_abiertos = "./imgs/normal_ojos_abiertos.png"
-imagen_ojos_cerrados = "./imgs/normal_ojos_cerrados.png"
+imagen_boca_abierta = "../imgs/boca_abierta.png"
+imagen_boca_cerrada = "../imgs/boca_cerrada.png"
 
-puntos_abiertos = os.path.join("puntos/puntos_abiertos.txt")
-puntos_cerrados = os.path.join("puntos/puntos_cerrados.txt")
+puntos_abiertos = os.path.join("../points/boca_abierta.txt")
+puntos_cerrados = os.path.join("../points/boca_cerrada.txt")
 
-name_output_video = "parpadeo_suave.mp4"
+name_output_video = "hablar_suave.mp4"
 folder_frames = "imagenes_transicion/parpadear"
 
 if not os.path.exists(puntos_abiertos):
-    generar_puntos_control(imagen_ojos_abiertos, puntos_abiertos)
+    print(puntos_abiertos)
+    print("no existe puntos abiertos")
+    generar_puntos_control(imagen_boca_abierta, puntos_abiertos)
 
 if not os.path.exists(puntos_cerrados):
-    generar_puntos_control(imagen_ojos_cerrados, puntos_cerrados)
+    print("si existe puntos abiertos")
+    generar_puntos_control(imagen_boca_cerrada, puntos_cerrados)
 
 generar_transicion_ojos(
-    imagen_ojos_abiertos,
-    imagen_ojos_cerrados,
-    puntos_abiertos,
+    imagen_boca_cerrada,
+    imagen_boca_abierta,
     puntos_cerrados,
-    num_frames=10,
+    puntos_abiertos,
+    num_frames=5,
     fps=60,
     output_video=name_output_video,
     folder_frames=folder_frames
