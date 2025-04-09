@@ -127,45 +127,49 @@ class VideoSynchronizer(Node):
                 frame_idx = int((1.0 - progress) * 2 * frame_count)
                 frame_idx = min(frame_idx, frame_count - 1)
                 return self.eyes_frames[frame_idx]
-    
+
     def get_current_mouth_frame(self):
-        """Obtiene el frame actual para la boca con animación más fluida"""
+        """Obtiene el frame actual para la boca con animación controlada por tiempo"""
         if not self.tts_active:
             return self.mouth_closed_img
-        
-        # Si TTS está activo, animar la boca con más fluidez
-        mouth_cycle_time = 1.8 
-        
-        # Calcular en qué parte del ciclo estamos (valor entre 0 y 1)
+
+        # Configuración de tiempos (ajusta estos valores según necesites)
+        transition_duration = 0.6  # Duración de apertura/cierre en segundos (X)
+        hold_open_duration = 0.2    # Tiempo con boca abierta
+        hold_closed_duration = 0.2  # Tiempo con boca cerrada al final
+
+        # Calcular ciclo total
+        mouth_cycle_time = (2 * transition_duration) + hold_open_duration + hold_closed_duration
         current_time = time.time()
         time_in_cycle = (current_time % mouth_cycle_time) / mouth_cycle_time
-        
+
         frame_count = len(self.mouth_frames)
-        
-        if time_in_cycle < 0.3:  
-            # Normalizar el progreso en esta fase (0-1)
-            phase_progress = time_in_cycle / 0.3
-            # Usar curva suavizada para movimiento más natural
+        if frame_count == 0:
+            return self.mouth_closed_img
+
+        # Definir límites de las fases
+        opening_end = transition_duration / mouth_cycle_time
+        hold_open_end = (transition_duration + hold_open_duration) / mouth_cycle_time
+        closing_end = (transition_duration + hold_open_duration + transition_duration) / mouth_cycle_time
+
+        if time_in_cycle < opening_end:  # Fase de apertura
+            phase_progress = time_in_cycle / opening_end
             smooth_progress = self._ease_in_out(phase_progress)
-            # Calcular el índice del frame
-            frame_idx = int(smooth_progress * frame_count)
+            frame_idx = int(smooth_progress * (frame_count - 1))
             frame_idx = min(frame_idx, frame_count - 1)
             return self.mouth_frames[frame_idx]
-            
-        elif time_in_cycle < 0.5: 
+
+        elif time_in_cycle < hold_open_end:  # Boca abierta
             return self.mouth_open_img
-            
-        elif time_in_cycle < 0.8: 
-            # Normalizar el progreso en esta fase (0-1)
-            phase_progress = (time_in_cycle - 0.5) / 0.3
-            # Usar curva suavizada para movimiento más natural
+
+        elif time_in_cycle < closing_end:  # Fase de cierre
+            phase_progress = (time_in_cycle - hold_open_end) / (closing_end - hold_open_end)
             smooth_progress = self._ease_in_out(phase_progress)
-            # Calcular el índice del frame (en orden inverso)
-            frame_idx = int((1.0 - smooth_progress) * frame_count)
+            frame_idx = int((1 - smooth_progress) * (frame_count - 1))
             frame_idx = min(max(frame_idx, 0), frame_count - 1)
             return self.mouth_frames[frame_idx]
-            
-        else: 
+
+        else:  # Boca cerrada al final
             return self.mouth_closed_img
 
     def _ease_in_out(self, x):
