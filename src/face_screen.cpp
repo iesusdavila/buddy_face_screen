@@ -12,44 +12,36 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
     std::string eyesFramesDir = buddyShareDir + "/imgs_transition/parpadear";
     std::string mouthFramesDir = buddyShareDir + "/imgs_transition/hablar";
     
-    // Imágenes iniciales y finales
     std::string eyesOpenImgDir = buddyShareDir + "/imgs/ojos_abiertos.png";
     std::string eyesClosedImgDir = buddyShareDir + "/imgs/ojos_cerrados.png";
     std::string mouthClosedImgDir = buddyShareDir + "/imgs/boca_cerrada.png";
     std::string mouthOpenImgDir = buddyShareDir + "/imgs/boca_abierta.png";
 
-    // Cargar imágenes
     eyesOpenImg = cv::imread(eyesOpenImgDir, cv::IMREAD_UNCHANGED);
     eyesClosedImg = cv::imread(eyesClosedImgDir, cv::IMREAD_UNCHANGED);
     mouthClosedImg = cv::imread(mouthClosedImgDir, cv::IMREAD_UNCHANGED);
     mouthOpenImg = cv::imread(mouthOpenImgDir, cv::IMREAD_UNCHANGED);
     
-    // Convertir imágenes a RGBA si es necesario
     cv::cvtColor(eyesOpenImg, eyesOpenImg, cv::COLOR_BGRA2RGBA);
     cv::cvtColor(eyesClosedImg, eyesClosedImg, cv::COLOR_BGRA2RGBA);
     cv::cvtColor(mouthClosedImg, mouthClosedImg, cv::COLOR_BGRA2RGBA);
     cv::cvtColor(mouthOpenImg, mouthOpenImg, cv::COLOR_BGRA2RGBA);
     
-    // Cargar frames de ojos y boca
     loadFrames(eyesFramesDir, eyesFrames);
     loadFrames(mouthFramesDir, mouthFrames);
     
-    // Variables de control
     ttsActive = false;
     lastBlinkTime = std::chrono::system_clock::now();
     blinkInterval = 8.0;
     running = true;
     
-    // Suscripción al topic de audio
     ttsSubscription = this->create_subscription<std_msgs::msg::Bool>(
         "/audio_playing",
         10,
         std::bind(&VideoSynchronizer::audioPlayingCallback, this, std::placeholders::_1));
 
-    // Publicador para la pantalla facial
     faceScreenPublisher = this->create_publisher<sensor_msgs::msg::Image>("/face_screen", 10);
     
-    // Iniciar el hilo de renderizado
     renderThread = std::thread(&VideoSynchronizer::renderLoop, this);
     
     RCLCPP_INFO(this->get_logger(), "Video Synchronizer iniciado");
@@ -64,7 +56,6 @@ void VideoSynchronizer::loadFrames(const std::string& framesDir, std::vector<cv:
 {
     frames.clear();
     
-    // Obtener todos los archivos .png en el directorio
     std::vector<std::string> framePaths;
     for (const auto& entry : fs::directory_iterator(framesDir))
     {
@@ -74,10 +65,8 @@ void VideoSynchronizer::loadFrames(const std::string& framesDir, std::vector<cv:
         }
     }
     
-    // Ordenar por nombre
     std::sort(framePaths.begin(), framePaths.end());
     
-    // Cargar cada frame
     for (const auto& path : framePaths)
     {
         cv::Mat frame = cv::imread(path, cv::IMREAD_UNCHANGED);
@@ -98,19 +87,16 @@ std::string VideoSynchronizer::getEyesState()
     auto currentTime = std::chrono::system_clock::now();
     double timeSinceLastBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
     
-    // Si han pasado 8 segundos desde el último parpadeo, inicia un nuevo parpadeo
     if (timeSinceLastBlink >= blinkInterval)
     {
         lastBlinkTime = currentTime;
         return "blinking";
     }
-    // Si estamos dentro de 0.5 segundos después del parpadeo, seguimos en secuencia de parpadeo
     else if (timeSinceLastBlink < 0.5)
     {
         return "blinking";
     }
     
-    // En otro caso, ojos abiertos
     return "open";
 }
 
@@ -122,13 +108,12 @@ cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
     }
     else if (eyesState == "blinking")
     {
-        // Determinar en qué parte de la secuencia de parpadeo estamos
         auto currentTime = std::chrono::system_clock::now();
         double timeInBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
         int fps = 60;
         int frameCount = static_cast<int>(eyesFrames.size());
 
-        double blinkDuration = frameCount * 1.25 / fps; // Duración total del parpadeo en segundos
+        double blinkDuration = frameCount * 1.25 / fps; 
         
         if (timeInBlink >= blinkDuration)
         {
@@ -137,7 +122,6 @@ cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
         
         double progress = timeInBlink / blinkDuration;
         
-        // Secuencia: abierto -> cerrado -> abierto
         if (progress < 0.5)
         {
             int frameIdx = static_cast<int>(progress * 2 * frameCount);
@@ -152,7 +136,6 @@ cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
         }
     }
     
-    // Por defecto retornar ojos abiertos
     return eyesOpenImg;
 }
 
@@ -163,12 +146,10 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
         return mouthClosedImg;
     }
 
-    // Configuración de tiempos (ajusta estos valores según necesites)
-    double transitionDuration = 0.6;  // Duración de apertura/cierre en segundos (X)
-    double holdOpenDuration = 0.2;    // Tiempo con boca abierta
-    double holdClosedDuration = 0.2;  // Tiempo con boca cerrada al final
+    double transitionDuration = 0.6;  
+    double holdOpenDuration = 0.2;    
+    double holdClosedDuration = 0.2;  
 
-    // Calcular ciclo total
     double mouthCycleTime = (2 * transitionDuration) + holdOpenDuration + holdClosedDuration;
     auto currentTime = std::chrono::system_clock::now();
     double secondsSinceEpoch = std::chrono::duration<double>(currentTime.time_since_epoch()).count();
@@ -180,12 +161,11 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
         return mouthClosedImg;
     }
 
-    // Definir límites de las fases
     double openingEnd = transitionDuration / mouthCycleTime;
     double holdOpenEnd = (transitionDuration + holdOpenDuration) / mouthCycleTime;
     double closingEnd = (transitionDuration + holdOpenDuration + transitionDuration) / mouthCycleTime;
 
-    if (timeInCycle < openingEnd)  // Fase de apertura
+    if (timeInCycle < openingEnd) 
     {
         double phaseProgress = timeInCycle / openingEnd;
         double smoothProgress = easeInOut(phaseProgress);
@@ -193,11 +173,11 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
         frameIdx = std::min(frameIdx, frameCount - 1);
         return mouthFrames[frameIdx];
     }
-    else if (timeInCycle < holdOpenEnd)  // Boca abierta
+    else if (timeInCycle < holdOpenEnd) 
     {
         return mouthOpenImg;
     }
-    else if (timeInCycle < closingEnd)  // Fase de cierre
+    else if (timeInCycle < closingEnd)
     {
         double phaseProgress = (timeInCycle - holdOpenEnd) / (closingEnd - holdOpenEnd);
         double smoothProgress = easeInOut(phaseProgress);
@@ -205,7 +185,7 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
         frameIdx = std::min(std::max(frameIdx, 0), frameCount - 1);
         return mouthFrames[frameIdx];
     }
-    else  // Boca cerrada al final
+    else 
     {
         return mouthClosedImg;
     }
@@ -213,7 +193,6 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
 
 double VideoSynchronizer::easeInOut(double x)
 {
-    // Función de suavizado cúbica: más lenta al inicio y al final, más rápida en el medio
     if (x < 0.5)
     {
         return 2 * x * x;
@@ -228,14 +207,12 @@ cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat
 {
     cv::Mat result = eyesFrame.clone();
     
-    // Combinar solo donde la máscara alpha de la boca es > 0
     for (int y = 0; y < mouthFrame.rows; y++)
     {
         for (int x = 0; x < mouthFrame.cols; x++)
         {
             cv::Vec4b mouthPixel = mouthFrame.at<cv::Vec4b>(y, x);
             
-            // Si el canal alpha de la boca es > 0, usar el píxel de la boca
             if (mouthPixel[3] > 0)
             {
                 result.at<cv::Vec4b>(y, x) = mouthPixel;
@@ -248,29 +225,24 @@ cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat
 
 void VideoSynchronizer::renderLoop()
 {
-    rclcpp::Rate rate(30);  // 30 Hz
+    rclcpp::Rate rate(30); 
     
     while (running && rclcpp::ok())
     {
-        // Obtener estados actuales
         std::string eyesState = getEyesState();
         cv::Mat eyesFrame = getCurrentEyeFrame(eyesState);
         cv::Mat mouthFrame = getCurrentMouthFrame();
         
-        // Combinar frames
         cv::Mat combinedFrame = combineFrames(eyesFrame, mouthFrame);
         
-        // Guardar el frame actual para posible grabación
         {
             std::lock_guard<std::mutex> lock(frameMutex);
             currentFrame = combinedFrame.clone();
         }
         
-        // Convertir RGBA a BGR para ROS
         cv::Mat rosFrame;
         cv::cvtColor(combinedFrame, rosFrame, cv::COLOR_RGBA2BGR);
         
-        // Convertir a mensaje de imagen ROS
         try
         {
             sensor_msgs::msg::Image::SharedPtr imgMsg = cv_bridge::CvImage(
@@ -279,7 +251,6 @@ void VideoSynchronizer::renderLoop()
             imgMsg->header.stamp = this->now();
             imgMsg->header.frame_id = "face_frame";
             
-            // Publicar la imagen
             faceScreenPublisher->publish(*imgMsg);
             RCLCPP_DEBUG(this->get_logger(), "Frame publicado en face_screen");
         }
@@ -288,7 +259,6 @@ void VideoSynchronizer::renderLoop()
             RCLCPP_ERROR(this->get_logger(), "Error al publicar imagen: %s", e.what());
         }
         
-        // Control de FPS
         rate.sleep();
     }
 }

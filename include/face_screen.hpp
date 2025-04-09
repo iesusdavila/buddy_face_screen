@@ -20,7 +20,6 @@ public:
     ~VideoSynchronizer();
 
 private:
-    // Funciones del nodo
     void loadFrames(const std::string& framesDir, std::vector<cv::Mat>& frames);
     void audioPlayingCallback(const std_msgs::msg::Bool::SharedPtr msg);
     std::string getEyesState();
@@ -31,17 +30,14 @@ private:
     void renderLoop();
     void shutdown();
 
-    // Imágenes de base
     cv::Mat eyesOpenImg;
     cv::Mat eyesClosedImg;
     cv::Mat mouthClosedImg;
     cv::Mat mouthOpenImg;
     
-    // Frames de transición
     std::vector<cv::Mat> eyesFrames;
     std::vector<cv::Mat> mouthFrames;
     
-    // Variables de estado
     bool ttsActive;
     std::chrono::time_point<std::chrono::system_clock> lastBlinkTime;
     double blinkInterval;
@@ -49,14 +45,11 @@ private:
     cv::Mat currentFrame;
     std::mutex frameMutex;
     
-    // Hilo de renderizado
     std::thread renderThread;
     
-    // Publicadores y suscriptores ROS
     rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr ttsSubscription;
     rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr faceScreenPublisher;
     
-    // Bridge para conversión entre OpenCV y ROS
     cv_bridge::CvImage cvBridge;
 };
 
