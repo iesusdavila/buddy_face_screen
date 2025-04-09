@@ -13,7 +13,7 @@ class MorphTransition:
     
     def read_points_from_file(self):
         """
-        Cargar las coordenadas de los puntos de control desde archivos de texto
+        Load control point coordinates from text files.
         """
         points_src = []
         points_dst = []
@@ -32,13 +32,13 @@ class MorphTransition:
 
     def linear_interpolation(self, src_points, dst_points, t):
         """
-        Calcular puntos intermedios entre los puntos de origen y destino usando interpolación lineal.
+        Calculate intermediate points between origin and destination points using linear interpolation.
         """
         return (1 - t) * src_points + t * dst_points
     
     def generate_fine_grid(self, points, interpolate_points, density=3):
         """
-        Genera una malla más densa entre los puntos de control.
+        Generate a denser mesh between control points.
         """
         points = np.array(points)
         interpolate_points = np.array(interpolate_points)
@@ -59,7 +59,7 @@ class MorphTransition:
 
     def apply_transformation(self, image, points, interpolate_points, density=3):
         """
-        Optimiza la transformación de la imagen para ser más rápida y mantener la calidad.
+        Optimize the image transformation to be faster and maintain quality.
         """
         points, interpolate_points = self.generate_fine_grid(points, interpolate_points, density)
 
@@ -95,7 +95,7 @@ class MorphTransition:
 
     def smooth_image(self, image, kernel_size=5):
         """
-        Suaviza únicamente los bordes de las áreas no transparentes de la imagen.
+        Smooth only the edges of non-transparent areas of the image.
         """
         alpha_channel = image[:, :, 3]
         rgb_image = image[:, :, :3]
@@ -113,7 +113,7 @@ class MorphTransition:
 
     def fill_holes(self, image):
         """
-        Optimiza el relleno de huecos transparentes en la imagen.
+        Optimize the filling of transparent holes in the image.
         """
         mask = (image[:, :, 3] == 0).astype(np.uint8) 
         if not np.any(mask):
@@ -126,8 +126,8 @@ class MorphTransition:
  
     def create_fade_transition_frames(self, deformed_images, deformed_images_2):
         """
-        Crea los frames de transición entre dos secuencias de imágenes.
-        Recibe las imágenes ya cargadas como arrays NumPy.
+        Create transition frames between two sequences of images.
+        Receives the already loaded images as NumPy arrays.
         """
         num_frames = min(len(deformed_images), len(deformed_images_2))
         deformed_images = deformed_images[:num_frames]
@@ -161,6 +161,9 @@ class MorphTransition:
         return frames
 
     def morph_transition(self):
+        """
+        Optimize the morphing transition between two images.
+        """
         src_image = cv2.imread(self.src_image_path, cv2.IMREAD_UNCHANGED)
 
         if src_image is None:
