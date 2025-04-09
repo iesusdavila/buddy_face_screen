@@ -67,13 +67,11 @@ class MorphTransition:
         rows, cols = image.shape[:2]
         new_image = np.zeros((rows, cols, image.shape[2]), dtype=image.dtype)
 
-        # Matrices inversas de transformación para cada triángulo
         affine_matrices = [
             cv2.getAffineTransform(np.float32(interpolate_points[simplex]), np.float32(points[simplex]))
             for simplex in tri.simplices
         ]
 
-        # Generar una máscara por triángulo directamente en paralelo
         for i, simplex in enumerate(tri.simplices):
             mask = np.zeros((rows, cols), dtype=np.uint8)
             cv2.fillConvexPoly(mask, np.int32(interpolate_points[simplex]), 255)
@@ -82,18 +80,15 @@ class MorphTransition:
             if mask_indices.size == 0:
                 continue 
 
-            # Transformar los píxeles destino a coordenadas fuente
             affine_matrix = affine_matrices[i]
             interpolate_pixels = np.hstack((mask_indices[:, ::-1], np.ones((mask_indices.shape[0], 1))))
             natural_pixels = (interpolate_pixels @ affine_matrix.T).astype(int)
 
-            # Filtrar píxeles fuera de los límites
             valid_mask = (0 <= natural_pixels[:, 0]) & (natural_pixels[:, 0] < cols) & \
                         (0 <= natural_pixels[:, 1]) & (natural_pixels[:, 1] < rows)
             natural_pixels = natural_pixels[valid_mask]
             mask_indices = mask_indices[valid_mask]
 
-            # Copiar píxeles de la imagen fuente
             new_image[mask_indices[:, 0], mask_indices[:, 1]] = image[natural_pixels[:, 1], natural_pixels[:, 0]]
 
         return new_image
@@ -102,22 +97,17 @@ class MorphTransition:
         """
         Suaviza únicamente los bordes de las áreas no transparentes de la imagen.
         """
-        # Separar el canal alfa y la imagen RGB
         alpha_channel = image[:, :, 3]
         rgb_image = image[:, :, :3]
 
-        # Crear una máscara de bordes donde el alfa cambia (es decir, la transición entre transparente y no transparente)
         edges = cv2.Canny(alpha_channel, 50, 150)
         dilated_edges = cv2.dilate(edges, np.ones((3, 3), np.uint8), iterations=1)
 
-        # Suavizar la región de bordes en la imagen RGB
         smoothed_rgb = cv2.GaussianBlur(rgb_image, (kernel_size, kernel_size), 0)
 
-        # Combinar la imagen suavizada en los bordes con la original
         smoothed_image = rgb_image.copy()
         smoothed_image[dilated_edges > 0] = smoothed_rgb[dilated_edges > 0]
 
-        # Reconstruir la imagen con el canal alfa original
         result = np.dstack((smoothed_image, alpha_channel))
         return result
 
@@ -129,10 +119,8 @@ class MorphTransition:
         if not np.any(mask):
             return image 
 
-        # Aplicar relleno únicamente donde hay transparencia
         rgb_filled = cv2.inpaint(image[:, :, :3], mask, inpaintRadius=1, flags=cv2.INPAINT_TELEA)
 
-        # Combinar el resultado con el canal alfa original
         filled_image = np.dstack((rgb_filled, image[:, :, 3]))
         return filled_image
  
@@ -141,39 +129,30 @@ class MorphTransition:
         Crea los frames de transición entre dos secuencias de imágenes.
         Recibe las imágenes ya cargadas como arrays NumPy.
         """
-        # Asegurar que ambas secuencias tengan el mismo número de imágenes
         num_frames = min(len(deformed_images), len(deformed_images_2))
         deformed_images = deformed_images[:num_frames]
         deformed_images_2 = deformed_images_2[:num_frames]
 
-        # Obtener las dimensiones de las imágenes
         width, height = deformed_images[0].shape[1], deformed_images[0].shape[0]
 
         frames=[]
 
         for i, (img_array_1, img_array_2) in enumerate(zip(deformed_images, deformed_images_2)):
-            # Crear una imagen base (fondo transparente)
             frame = Image.new("RGBA", (width, height), (0, 0, 0, 0))
 
-            # Convertir las imágenes de arrays NumPy a imágenes de PIL
             img1 = Image.fromarray(img_array_1)
             img2 = Image.fromarray(img_array_2)
 
-            # Asegurar que ambas imágenes sean RGBA
             img1 = img1.convert("RGBA")
             img2 = img2.convert("RGBA")
 
-            # Calcular las opacidades
-            alpha_1 = 1  # Disminuye de 1 a 0
+            alpha_1 = 1  
 
-            # Calcular las opacidades
-            alpha_2 = min(1, i / (num_frames - 1)) # Aumenta de 0 a 1
+            alpha_2 = min(1, i / (num_frames - 1))
 
-            # Ajustar opacidad de ambas imágenes
             img1 = Image.blend(Image.new("RGBA", (width, height), (0, 0, 0, 0)), img1, alpha_1)
             img2 = Image.blend(Image.new("RGBA", (width, height), (0, 0, 0, 0)), img2, alpha_2)
 
-            # Superponer ambas imágenes
             frame = Image.alpha_composite(frame, img1)
             frame = Image.alpha_composite(frame, img2)
 
@@ -205,9 +184,8 @@ class MorphTransition:
                 deformed_images_1 = []
                 deformed_images_2 = []
                 
-                # Generar imágenes deformadas para diferentes valores de interpolación (t = 0, 0.2, 0.4, ..., 1)
                 for i in range(1, self.num_images + 1 ):
-                    t = i / (self.num_images + 1)  # Factor de interpolación entre 0 y 1, menos 0 y 1
+                    t = i / (self.num_images + 1)  
                     print(f"Generando imagen para t = {t}")
                     
                     interpolated_points_1 = self.linear_interpolation(src_points, dst_points, t)

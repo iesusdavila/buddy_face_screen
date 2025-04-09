@@ -16,10 +16,6 @@ def save_frames_to_folder(frames, output_frames_dir):
     print(f"Frames guardados en la carpeta: {output_frames_dir}")
 
 def generar_puntos_control(img_path, puntos_salida):
-    """
-    Función auxiliar para crear manualmente los puntos de control
-    Ejecutar por separado para cada imagen necesaria
-    """
     img = cv2.imread(img_path)
     puntos = []
     
@@ -63,11 +59,11 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
         frame_duration = 1/fps
 
         clips = [
-            ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
-            *[ImageClip(np.array(frame), duration=frame_duration) for frame in frames_transicion],  # Transición
-            ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  # Imagen final
-            *[ImageClip(np.array(frame), duration=frame_duration) for frame in reversed(frames_transicion)],  # Transición inversa,
-            ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  # Imagen inicial
+            ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  
+            *[ImageClip(np.array(frame), duration=frame_duration) for frame in frames_transicion],  
+            ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  
+            *[ImageClip(np.array(frame), duration=frame_duration) for frame in reversed(frames_transicion)],
+            ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  
         ]
 
         video_final = concatenate_videoclips(clips, method="compose")
