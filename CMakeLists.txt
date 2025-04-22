@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(buddy_face_screen)
+project(coco_face_screen)
 
 # ========== Configuración para C++ ==========
 find_package(ament_cmake REQUIRED)
