@@ -7,15 +7,15 @@ namespace fs = std::filesystem;
 
 VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
 {
-    std::string buddyShareDir = ament_index_cpp::get_package_share_directory("buddy_face_screen");
+    std::string cocoShareDir = ament_index_cpp::get_package_share_directory("coco_face_screen");
     
-    std::string eyesFramesDir = buddyShareDir + "/imgs_transition/parpadear";
-    std::string mouthFramesDir = buddyShareDir + "/imgs_transition/hablar";
+    std::string eyesFramesDir = cocoShareDir + "/imgs_transition/parpadear";
+    std::string mouthFramesDir = cocoShareDir + "/imgs_transition/hablar";
     
-    std::string eyesOpenImgDir = buddyShareDir + "/imgs/ojos_abiertos.png";
-    std::string eyesClosedImgDir = buddyShareDir + "/imgs/ojos_cerrados.png";
-    std::string mouthClosedImgDir = buddyShareDir + "/imgs/boca_cerrada.png";
-    std::string mouthOpenImgDir = buddyShareDir + "/imgs/boca_abierta.png";
+    std::string eyesOpenImgDir = cocoShareDir + "/imgs/ojos_abiertos.png";
+    std::string eyesClosedImgDir = cocoShareDir + "/imgs/ojos_cerrados.png";
+    std::string mouthClosedImgDir = cocoShareDir + "/imgs/boca_cerrada.png";
+    std::string mouthOpenImgDir = cocoShareDir + "/imgs/boca_abierta.png";
 
     eyesOpenImg = cv::imread(eyesOpenImgDir, cv::IMREAD_UNCHANGED);
     eyesClosedImg = cv::imread(eyesClosedImgDir, cv::IMREAD_UNCHANGED);
