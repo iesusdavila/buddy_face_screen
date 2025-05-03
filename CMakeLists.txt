@@ -28,7 +28,6 @@ install(DIRECTORY
   points
   scripts
   src
-  videos
   DESTINATION share/${PROJECT_NAME}
 )
 
