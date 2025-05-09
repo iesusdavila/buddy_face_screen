@@ -47,23 +47,15 @@ void VideoSynchronizer::loadFrames(const std::string& framesDir, std::vector<cv:
 {
     frames.clear();
     
-    std::vector<std::string> framePaths;
     for (const auto& entry : fs::directory_iterator(framesDir))
     {
         if (entry.path().extension() == ".png" && entry.path().filename().string().find("frame_") != std::string::npos)
         {
-            framePaths.push_back(entry.path().string());
+            cv::Mat frame = cv::imread(entry.path().string(), cv::IMREAD_UNCHANGED);
+            cv::Mat rgbaFrame;
+            cv::cvtColor(frame, rgbaFrame, cv::COLOR_BGRA2RGBA);
+            frames.push_back(rgbaFrame);
         }
-    }
-    
-    std::sort(framePaths.begin(), framePaths.end());
-    
-    for (const auto& path : framePaths)
-    {
-        cv::Mat frame = cv::imread(path, cv::IMREAD_UNCHANGED);
-        cv::Mat rgbaFrame;
-        cv::cvtColor(frame, rgbaFrame, cv::COLOR_BGRA2RGBA);
-        frames.push_back(rgbaFrame);
     }
 }
 
