@@ -11,24 +11,19 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
     
     std::string eyesFramesDir = cocoShareDir + "/imgs_transition/parpadear";
     std::string mouthFramesDir = cocoShareDir + "/imgs_transition/hablar";
-    
-    std::string eyesOpenImgDir = cocoShareDir + "/imgs/ojos_abiertos.png";
-    std::string eyesClosedImgDir = cocoShareDir + "/imgs/ojos_cerrados.png";
-    std::string mouthClosedImgDir = cocoShareDir + "/imgs/boca_cerrada.png";
-    std::string mouthOpenImgDir = cocoShareDir + "/imgs/boca_abierta.png";
 
-    eyesOpenImg = cv::imread(eyesOpenImgDir, cv::IMREAD_UNCHANGED);
-    eyesClosedImg = cv::imread(eyesClosedImgDir, cv::IMREAD_UNCHANGED);
-    mouthClosedImg = cv::imread(mouthClosedImgDir, cv::IMREAD_UNCHANGED);
-    mouthOpenImg = cv::imread(mouthOpenImgDir, cv::IMREAD_UNCHANGED);
+    eyesOpenImg = cv::imread(cocoShareDir + "/imgs/ojos_abiertos.png", cv::IMREAD_UNCHANGED);
+    eyesClosedImg = cv::imread(cocoShareDir + "/imgs/ojos_cerrados.png", cv::IMREAD_UNCHANGED);
+    mouthClosedImg = cv::imread(cocoShareDir + "/imgs/boca_cerrada.png", cv::IMREAD_UNCHANGED);
+    mouthOpenImg = cv::imread(cocoShareDir + "/imgs/boca_abierta.png", cv::IMREAD_UNCHANGED);
     
     cv::cvtColor(eyesOpenImg, eyesOpenImg, cv::COLOR_BGRA2RGBA);
     cv::cvtColor(eyesClosedImg, eyesClosedImg, cv::COLOR_BGRA2RGBA);
     cv::cvtColor(mouthClosedImg, mouthClosedImg, cv::COLOR_BGRA2RGBA);
     cv::cvtColor(mouthOpenImg, mouthOpenImg, cv::COLOR_BGRA2RGBA);
     
-    loadFrames(eyesFramesDir, eyesFrames);
-    loadFrames(mouthFramesDir, mouthFrames);
+    loadFrames(cocoShareDir + "/imgs_transition/parpadear", eyesFrames);
+    loadFrames(cocoShareDir + "/imgs_transition/hablar", mouthFrames);
     
     ttsActive = false;
     lastBlinkTime = std::chrono::system_clock::now();
