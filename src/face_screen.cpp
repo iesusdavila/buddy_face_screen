@@ -52,9 +52,8 @@ void VideoSynchronizer::loadFrames(const std::string& framesDir, std::vector<cv:
         if (entry.path().extension() == ".png" && entry.path().filename().string().find("frame_") != std::string::npos)
         {
             cv::Mat frame = cv::imread(entry.path().string(), cv::IMREAD_UNCHANGED);
-            cv::Mat rgbaFrame;
-            cv::cvtColor(frame, rgbaFrame, cv::COLOR_BGRA2RGBA);
-            frames.push_back(rgbaFrame);
+            cv::cvtColor(frame, frame, cv::COLOR_BGRA2RGBA);
+            frames.push_back(std::move(frame));
         }
     }
 }
