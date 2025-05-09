@@ -98,29 +98,14 @@ cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
 
 cv::Mat VideoSynchronizer::getCurrentMouthFrame()
 {
-    if (!ttsActive)
-    {
-        return mouthClosedImg;
-    }
+    if (!ttsActive) return mouthClosedImg;
 
-    double transitionDuration = 0.6;  
-    double holdOpenDuration = 0.2;    
-    double holdClosedDuration = 0.2;  
-
-    double mouthCycleTime = (2 * transitionDuration) + holdOpenDuration + holdClosedDuration;
     auto currentTime = std::chrono::system_clock::now();
     double secondsSinceEpoch = std::chrono::duration<double>(currentTime.time_since_epoch()).count();
     double timeInCycle = std::fmod(secondsSinceEpoch, mouthCycleTime) / mouthCycleTime;
 
     int frameCount = static_cast<int>(mouthFrames.size());
-    if (frameCount == 0)
-    {
-        return mouthClosedImg;
-    }
-
-    double openingEnd = transitionDuration / mouthCycleTime;
-    double holdOpenEnd = (transitionDuration + holdOpenDuration) / mouthCycleTime;
-    double closingEnd = (transitionDuration + holdOpenDuration + transitionDuration) / mouthCycleTime;
+    if (frameCount == 0) return mouthClosedImg; 
 
     if (timeInCycle < openingEnd) 
     {
@@ -142,10 +127,7 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
         frameIdx = std::min(std::max(frameIdx, 0), frameCount - 1);
         return mouthFrames[frameIdx];
     }
-    else 
-    {
-        return mouthClosedImg;
-    }
+    return mouthClosedImg;
 }
 
 double VideoSynchronizer::easeInOut(double x)

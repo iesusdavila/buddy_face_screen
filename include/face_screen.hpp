@@ -37,6 +37,11 @@ private:
     
     std::vector<cv::Mat> eyesFrames;
     std::vector<cv::Mat> mouthFrames;
+
+    const double mouthCycleTime = (0.6 * 2) + 0.2 + 0.2; // transition*2 + hold_open + hold_closed
+    const double openingEnd = 0.6 / mouthCycleTime; //transition / mouthCycleTime;
+    const double holdOpenEnd = (0.6 + 0.2) / mouthCycleTime; //(transition + holdOpen) / mouthCycleTime;
+    const double closingEnd = (0.6 * 2) / mouthCycleTime; //(transition*2 + holdOpen) / mouthCycleTime;
     
     bool ttsActive;
     std::chrono::time_point<std::chrono::system_clock> lastBlinkTime;
