@@ -8,9 +8,6 @@ namespace fs = std::filesystem;
 VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
 {
     std::string cocoShareDir = ament_index_cpp::get_package_share_directory("coco_face_screen");
-    
-    std::string eyesFramesDir = cocoShareDir + "/imgs_transition/parpadear";
-    std::string mouthFramesDir = cocoShareDir + "/imgs_transition/hablar";
 
     eyesOpenImg = cv::imread(cocoShareDir + "/imgs/ojos_abiertos.png", cv::IMREAD_UNCHANGED);
     eyesClosedImg = cv::imread(cocoShareDir + "/imgs/ojos_cerrados.png", cv::IMREAD_UNCHANGED);
