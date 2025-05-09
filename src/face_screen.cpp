@@ -32,7 +32,6 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
     
     ttsActive = false;
     lastBlinkTime = std::chrono::system_clock::now();
-    blinkInterval = 8.0;
     running = true;
     
     ttsSubscription = this->create_subscription<std_msgs::msg::Bool>(
@@ -87,12 +86,13 @@ std::string VideoSynchronizer::getEyesState()
     auto currentTime = std::chrono::system_clock::now();
     double timeSinceLastBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
     
-    if (timeSinceLastBlink >= blinkInterval)
+    if (timeSinceLastBlink >= BLINK_INTERVAL)
     {
         lastBlinkTime = currentTime;
         return "blinking";
     }
-    else if (timeSinceLastBlink < 0.5)
+    
+    if (timeSinceLastBlink < 0.5)
     {
         return "blinking";
     }
@@ -193,14 +193,7 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
 
 double VideoSynchronizer::easeInOut(double x)
 {
-    if (x < 0.5)
-    {
-        return 2 * x * x;
-    }
-    else
-    {
-        return 1 - std::pow(-2 * x + 2, 2) / 2;
-    }
+    return (x < 0.5) ? (2 * x * x) : (1 - std::pow(-2 * x + 2, 2) / 2);
 }
 
 cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat& mouthFrame)

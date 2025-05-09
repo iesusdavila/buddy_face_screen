@@ -40,7 +40,7 @@ private:
     
     bool ttsActive;
     std::chrono::time_point<std::chrono::system_clock> lastBlinkTime;
-    double blinkInterval;
+    const double BLINK_INTERVAL = 8.0;
     bool running;
     cv::Mat currentFrame;
     std::mutex frameMutex;
