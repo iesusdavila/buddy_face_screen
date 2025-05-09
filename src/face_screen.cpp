@@ -14,11 +14,6 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
     mouthClosedImg = cv::imread(cocoShareDir + "/imgs/boca_cerrada.png", cv::IMREAD_UNCHANGED);
     mouthOpenImg = cv::imread(cocoShareDir + "/imgs/boca_abierta.png", cv::IMREAD_UNCHANGED);
     
-    cv::cvtColor(eyesOpenImg, eyesOpenImg, cv::COLOR_BGRA2RGBA);
-    cv::cvtColor(eyesClosedImg, eyesClosedImg, cv::COLOR_BGRA2RGBA);
-    cv::cvtColor(mouthClosedImg, mouthClosedImg, cv::COLOR_BGRA2RGBA);
-    cv::cvtColor(mouthOpenImg, mouthOpenImg, cv::COLOR_BGRA2RGBA);
-    
     loadFrames(cocoShareDir + "/imgs_transition/parpadear", eyesFrames);
     loadFrames(cocoShareDir + "/imgs_transition/hablar", mouthFrames);
     
@@ -52,7 +47,6 @@ void VideoSynchronizer::loadFrames(const std::string& framesDir, std::vector<cv:
         if (entry.path().extension() == ".png" && entry.path().filename().string().find("frame_") != std::string::npos)
         {
             cv::Mat frame = cv::imread(entry.path().string(), cv::IMREAD_UNCHANGED);
-            cv::cvtColor(frame, frame, cv::COLOR_BGRA2RGBA);
             frames.push_back(std::move(frame));
         }
     }
@@ -201,6 +195,7 @@ cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat
 
 void VideoSynchronizer::renderLoop()
 {
+    std::lock_guard<std::mutex> lock(frameMutex);
     rclcpp::Rate rate(30); 
     
     while (running && rclcpp::ok())
@@ -211,13 +206,8 @@ void VideoSynchronizer::renderLoop()
         
         cv::Mat combinedFrame = combineFrames(eyesFrame, mouthFrame);
         
-        {
-            std::lock_guard<std::mutex> lock(frameMutex);
-            currentFrame = combinedFrame.clone();
-        }
-        
         cv::Mat rosFrame;
-        cv::cvtColor(combinedFrame, rosFrame, cv::COLOR_RGBA2BGR);
+        cv::cvtColor(combinedFrame, rosFrame, cv::COLOR_BGRA2BGR);
         
         try
         {
