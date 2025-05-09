@@ -191,14 +191,11 @@ void VideoSynchronizer::renderLoop()
         cv::Mat mouthFrame = getCurrentMouthFrame();
         
         cv::Mat combinedFrame = combineFrames(eyesFrame, mouthFrame);
-        
-        cv::Mat rosFrame;
-        cv::cvtColor(combinedFrame, rosFrame, cv::COLOR_BGRA2BGR);
-        
+                
         try
         {
             sensor_msgs::msg::Image::SharedPtr imgMsg = cv_bridge::CvImage(
-                std_msgs::msg::Header(), "bgr8", rosFrame).toImageMsg();
+                std_msgs::msg::Header(), "bgra8", combinedFrame).toImageMsg();
             
             imgMsg->header.stamp = this->now();
             imgMsg->header.frame_id = "face_frame";
