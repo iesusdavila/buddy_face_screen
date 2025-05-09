@@ -173,23 +173,9 @@ double VideoSynchronizer::easeInOut(double x)
     return (x < 0.5) ? (2 * x * x) : (1 - std::pow(-2 * x + 2, 2) / 2);
 }
 
-cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat& mouthFrame)
-{
-    cv::Mat result = eyesFrame.clone();
-    
-    for (int y = 0; y < mouthFrame.rows; y++)
-    {
-        for (int x = 0; x < mouthFrame.cols; x++)
-        {
-            cv::Vec4b mouthPixel = mouthFrame.at<cv::Vec4b>(y, x);
-            
-            if (mouthPixel[3] > 0)
-            {
-                result.at<cv::Vec4b>(y, x) = mouthPixel;
-            }
-        }
-    }
-    
+cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat& mouthFrame) {
+    cv::Mat result;
+    cv::addWeighted(eyesFrame, 1.0, mouthFrame, 1.0, 0.0, result);  // Mezcla alfa eficiente
     return result;
 }
 
