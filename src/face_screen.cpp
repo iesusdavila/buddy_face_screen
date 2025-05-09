@@ -79,41 +79,21 @@ std::string VideoSynchronizer::getEyesState()
 
 cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
 {
-    if (eyesState == "open")
-    {
-        return eyesOpenImg;
-    }
-    else if (eyesState == "blinking")
-    {
-        auto currentTime = std::chrono::system_clock::now();
-        double timeInBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
-        int fps = 60;
-        int frameCount = static_cast<int>(eyesFrames.size());
-
-        double blinkDuration = frameCount * 1.25 / fps; 
-        
-        if (timeInBlink >= blinkDuration)
-        {
-            return eyesOpenImg;
-        }
-        
-        double progress = timeInBlink / blinkDuration;
-        
-        if (progress < 0.5)
-        {
-            int frameIdx = static_cast<int>(progress * 2 * frameCount);
-            frameIdx = std::min(frameIdx, frameCount - 1);
-            return eyesFrames[frameIdx];
-        }
-        else
-        {
-            int frameIdx = static_cast<int>((1.0 - progress) * 2 * frameCount);
-            frameIdx = std::min(frameIdx, frameCount - 1);
-            return eyesFrames[frameIdx];
-        }
-    }
+    if (eyesState == "open") return eyesOpenImg;
     
-    return eyesOpenImg;
+    auto currentTime = std::chrono::system_clock::now();
+    double timeInBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
+    int fps = 60;
+    int frameCount = static_cast<int>(eyesFrames.size());
+
+    double blinkDuration = eyesFrames.size() * 1.25 / fps; 
+    if (timeInBlink >= blinkDuration) return eyesOpenImg;
+    
+    double progress = std::max(0.0, std::min(timeInBlink / blinkDuration, 1.0));
+    int frameIdx = static_cast<int>(
+        (progress < 0.5 ? progress * 2 : 2.0 - progress * 2) * (eyesFrames.size() - 1)
+    );
+    return eyesFrames[frameIdx];
 }
 
 cv::Mat VideoSynchronizer::getCurrentMouthFrame()
