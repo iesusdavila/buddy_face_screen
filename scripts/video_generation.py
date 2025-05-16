@@ -88,12 +88,9 @@ name_output_video = "hablar_suave.mp4"
 folder_frames = "imagenes_transicion/parpadear"
 
 if not os.path.exists(puntos_abiertos):
-    print(puntos_abiertos)
-    print("no existe puntos abiertos")
     generar_puntos_control(imagen_boca_abierta, puntos_abiertos)
 
 if not os.path.exists(puntos_cerrados):
-    print("si existe puntos abiertos")
     generar_puntos_control(imagen_boca_cerrada, puntos_cerrados)
 
 generar_transicion_ojos(
