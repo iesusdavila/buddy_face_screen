@@ -13,7 +13,7 @@ def save_frames_to_folder(frames, output_frames_dir):
         frame_output_path = os.path.join(output_frames_dir, f"frame_{i:04d}.png")
         frame.save(frame_output_path, format="PNG")
         
-    print(f"Frames guardados en la carpeta: {output_frames_dir}")
+    print(f"Frames saved in the folder: {output_frames_dir}")
 
 def generar_puntos_control(img_path, puntos_salida):
     img = cv2.imread(img_path)
@@ -32,7 +32,7 @@ def generar_puntos_control(img_path, puntos_salida):
     
     np.savetxt(puntos_salida, np.array(puntos, dtype=int), fmt="%d", delimiter=", ")
     
-    print(f"Puntos guardados en {puntos_salida}")
+    print(f"Saved points in {puntos_salida}")
     return np.array(puntos)
 
 def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos_final, 
@@ -76,7 +76,7 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
             logger=None
         )
 
-        print(f"Video generado: {output_video}\nDuración total: {video_final.duration:.2f}s")
+        print(f"Generated video: {output_video}\nDuración total: {video_final.duration:.2f}s")
 
 imagen_boca_abierta = "../imgs/boca_abierta.png"
 imagen_boca_cerrada = "../imgs/boca_cerrada.png"
