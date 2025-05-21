@@ -137,7 +137,7 @@ double VideoSynchronizer::easeInOut(double x)
 
 cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat& mouthFrame) {
     cv::Mat result;
-    cv::addWeighted(eyesFrame, 1.0, mouthFrame, 1.0, 0.0, result);  // Mezcla alfa eficiente
+    cv::addWeighted(eyesFrame, 1.0, mouthFrame, 1.0, 0.0, result); 
     return result;
 }
 
@@ -163,11 +163,11 @@ void VideoSynchronizer::renderLoop()
             imgMsg->header.frame_id = "face_frame";
             
             faceScreenPublisher->publish(*imgMsg);
-            RCLCPP_DEBUG(this->get_logger(), "Frame publicado en face_screen");
+            RCLCPP_INFO(this->get_logger(), "Frame publicado en face_screen");
         }
         catch (const std::exception& e)
         {
-            RCLCPP_ERROR(this->get_logger(), "Error al publicar imagen: %s", e.what());
+            RCLCPP_INFO(this->get_logger(), "Error al publicar imagen: %s", e.what());
         }
         
         rate.sleep();
