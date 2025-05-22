@@ -16,78 +16,78 @@ def save_frames_to_folder(frames, output_frames_dir):
         
     print(f"Frames saved in the folder: {output_frames_dir}")
 
-def generar_puntos_control(img_path, puntos_salida):
+def generate_checkpoints(img_path, output_points):
     img = cv2.imread(img_path)
-    puntos = []
+    points = []
     
     def click_event(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
-            puntos.append([x, y])
+            points.append([x, y])
             cv2.circle(img, (x, y), 3, (0,0,255), -1)
-            cv2.imshow('Imagen', img)
+            cv2.imshow('Image', img)
     
-    cv2.imshow('Imagen', img)
-    cv2.setMouseCallback('Imagen', click_event)
+    cv2.imshow('Image', img)
+    cv2.setMouseCallback('Image', click_event)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     
-    np.savetxt(puntos_salida, np.array(puntos, dtype=int), fmt="%d", delimiter=", ")
+    np.savetxt(output_points, np.array(points, dtype=int), fmt="%d", delimiter=", ")
     
-    print(f"Saved points in {puntos_salida}")
-    return np.array(puntos)
+    print(f"Saved points in {output_points}")
+    return np.array(points)
 
-def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos_final, 
-                           num_frames=10, fps=24, tiempo_exposicion=0.5, 
+def generate_eye_transition(dir_init_img, dir_final_img, points_init_img, points_final_img, 
+                           num_frames=10, fps=24, exposure_time=0.5, 
                            folder_frames=None):
-    img_inicial = cv2.imread(imagen_inicial, cv2.IMREAD_UNCHANGED)
-    img_inicial = cv2.cvtColor(img_inicial, cv2.COLOR_BGRA2RGBA)
-    img_final = cv2.imread(imagen_final, cv2.IMREAD_UNCHANGED)
-    img_final = cv2.cvtColor(img_final, cv2.COLOR_BGRA2RGBA)
+    init_img = cv2.imread(dir_init_img, cv2.IMREAD_UNCHANGED)
+    init_img = cv2.cvtColor(init_img, cv2.COLOR_BGRA2RGBA)
+    final_img = cv2.imread(dir_final_img, cv2.IMREAD_UNCHANGED)
+    final_img = cv2.cvtColor(final_img, cv2.COLOR_BGRA2RGBA)
 
-    frames_transicion = MorphTransition(
-        imagen_inicial,
-        imagen_final,
-        puntos_inicial,
-        puntos_final,
+    frames_transition = MorphTransition(
+        dir_init_img,
+        dir_final_img,
+        points_init_img,
+        points_final_img,
         num_images=num_frames
     ).morph_transition()
 
     if folder_frames is not None:
-        save_frames_to_folder(frames_transicion, folder_frames)
+        save_frames_to_folder(frames_transition, folder_frames)
 
     frame_duration = 1/fps
 
     clips = [
-        ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  
-        *[ImageClip(np.array(frame), duration=frame_duration) for frame in frames_transicion],  
-        ImageClip(np.array(img_final), duration=tiempo_exposicion*0.75),  
-        *[ImageClip(np.array(frame), duration=frame_duration) for frame in reversed(frames_transicion)],
-        ImageClip(np.array(img_inicial), duration=tiempo_exposicion*3),  
+        ImageClip(np.array(init_img), duration=exposure_time*3),  
+        *[ImageClip(np.array(frame), duration=frame_duration) for frame in frames_transition],  
+        ImageClip(np.array(final_img), duration=exposure_time*0.75),  
+        *[ImageClip(np.array(frame), duration=frame_duration) for frame in reversed(frames_transition)],
+        ImageClip(np.array(init_img), duration=exposure_time*3),  
     ]
 
     concatenate_videoclips(clips, method="compose")
 
 path_pkg = get_package_share_directory('coco_face_screen')
 
-imagen_boca_abierta = os.path.join(path_pkg, "imgs", "boca_abierta.png")
-imagen_boca_cerrada = os.path.join(path_pkg, "imgs", "boca_cerrada.png")
+init_img = os.path.join(path_pkg, "imgs", "boca_abierta.png")
+final_img = os.path.join(path_pkg, "imgs", "boca_cerrada.png")
 
-puntos_abiertos = os.path.join(path_pkg,"points","boca_abierta.txt")
-puntos_cerrados = os.path.join(path_pkg,"points","boca_cerrada.txt")
+points_init_img = os.path.join(path_pkg,"points","boca_abierta.txt")
+points_final_img = os.path.join(path_pkg,"points","boca_cerrada.txt")
 
 folder_frames = os.path.join(path_pkg, "imagenes_transicion", "parpadear")
 
-if not os.path.exists(puntos_abiertos):
-    generar_puntos_control(imagen_boca_abierta, puntos_abiertos)
+if not os.path.exists(points_init_img):
+    generate_checkpoints(init_img, points_init_img)
 
-if not os.path.exists(puntos_cerrados):
-    generar_puntos_control(imagen_boca_cerrada, puntos_cerrados)
+if not os.path.exists(points_final_img):
+    generate_checkpoints(final_img, points_final_img)
 
-generar_transicion_ojos(
-    imagen_boca_cerrada,
-    imagen_boca_abierta,
-    puntos_cerrados,
-    puntos_abiertos,
+generate_eye_transition(
+    final_img,
+    init_img,
+    points_final_img,
+    points_init_img,
     num_frames=5,
     fps=60,
     folder_frames=folder_frames
