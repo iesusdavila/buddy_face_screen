@@ -3,6 +3,7 @@ import numpy as np
 from united_morph_transition import MorphTransition
 from moviepy import ImageClip, concatenate_videoclips
 import os
+from ament_index_python import get_package_share_directory
 
 def save_frames_to_folder(frames, output_frames_dir):
     if not os.path.exists(output_frames_dir):
@@ -66,13 +67,15 @@ def generar_transicion_ojos(imagen_inicial, imagen_final, puntos_inicial, puntos
 
     concatenate_videoclips(clips, method="compose")
 
-imagen_boca_abierta = "../imgs/boca_abierta.png"
-imagen_boca_cerrada = "../imgs/boca_cerrada.png"
+path_pkg = get_package_share_directory('coco_face_screen')
 
-puntos_abiertos = os.path.join("../points/boca_abierta.txt")
-puntos_cerrados = os.path.join("../points/boca_cerrada.txt")
+imagen_boca_abierta = os.path.join(path_pkg, "imgs", "boca_abierta.png")
+imagen_boca_cerrada = os.path.join(path_pkg, "imgs", "boca_cerrada.png")
 
-folder_frames = "imagenes_transicion/parpadear"
+puntos_abiertos = os.path.join(path_pkg,"points","boca_abierta.txt")
+puntos_cerrados = os.path.join(path_pkg,"points","boca_cerrada.txt")
+
+folder_frames = os.path.join(path_pkg, "imagenes_transicion", "parpadear")
 
 if not os.path.exists(puntos_abiertos):
     generar_puntos_control(imagen_boca_abierta, puntos_abiertos)
