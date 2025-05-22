@@ -75,7 +75,7 @@ final_img = os.path.join(path_pkg, "imgs", "boca_cerrada.png")
 points_init_img = os.path.join(path_pkg,"points","boca_abierta.txt")
 points_final_img = os.path.join(path_pkg,"points","boca_cerrada.txt")
 
-folder_frames = os.path.join(path_pkg, "imagenes_transicion", "parpadear")
+folder_frames = "../imgs_transition/parpeadear"
 
 if not os.path.exists(points_init_img):
     generate_checkpoints(init_img, points_init_img)
