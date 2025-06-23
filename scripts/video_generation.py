@@ -69,13 +69,13 @@ def generate_eye_transition(dir_init_img, dir_final_img, points_init_img, points
 
 path_pkg = get_package_share_directory('coco_face_screen')
 
-init_img = os.path.join(path_pkg, "imgs", "boca_abierta.png")
-final_img = os.path.join(path_pkg, "imgs", "boca_cerrada.png")
+init_img = os.path.join(path_pkg, "imgs", "open_mouth.png")
+final_img = os.path.join(path_pkg, "imgs", "close_mouth.png")
 
-points_init_img = os.path.join(path_pkg,"points","boca_abierta.txt")
-points_final_img = os.path.join(path_pkg,"points","boca_cerrada.txt")
+points_init_img = os.path.join(path_pkg,"points","open_mouth.txt")
+points_final_img = os.path.join(path_pkg,"points","close_mouth.txt")
 
-folder_frames = "../imgs_transition/hablar"
+folder_frames = "../imgs_transition/talking"
 
 if not os.path.exists(points_init_img):
     generate_checkpoints(init_img, points_init_img)
@@ -88,7 +88,7 @@ generate_eye_transition(
     init_img,
     points_final_img,
     points_init_img,
-    num_frames=5,
+    num_frames=15,
     fps=60,
     folder_frames=folder_frames
 )
