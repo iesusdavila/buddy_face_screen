@@ -9,13 +9,13 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
 {
     std::string cocoShareDir = ament_index_cpp::get_package_share_directory("coco_face_screen");
 
-    eyesOpenImg = cv::imread(cocoShareDir + "/imgs/ojos_abiertos.png", cv::IMREAD_UNCHANGED);
-    eyesClosedImg = cv::imread(cocoShareDir + "/imgs/ojos_cerrados.png", cv::IMREAD_UNCHANGED);
-    mouthClosedImg = cv::imread(cocoShareDir + "/imgs/boca_cerrada.png", cv::IMREAD_UNCHANGED);
-    mouthOpenImg = cv::imread(cocoShareDir + "/imgs/boca_abierta.png", cv::IMREAD_UNCHANGED);
+    eyesOpenImg = cv::imread(cocoShareDir + "/imgs/open_eyes.png", cv::IMREAD_UNCHANGED);
+    eyesClosedImg = cv::imread(cocoShareDir + "/imgs/close_eyes.png", cv::IMREAD_UNCHANGED);
+    mouthClosedImg = cv::imread(cocoShareDir + "/imgs/close_mouth.png", cv::IMREAD_UNCHANGED);
+    mouthOpenImg = cv::imread(cocoShareDir + "/imgs/open_mouth.png", cv::IMREAD_UNCHANGED);
     
-    loadFrames(cocoShareDir + "/imgs_transition/parpadear", eyesFrames);
-    loadFrames(cocoShareDir + "/imgs_transition/hablar", mouthFrames);
+    loadFrames(cocoShareDir + "/imgs_transition/blinking_frames", eyesFrames);
+    loadFrames(cocoShareDir + "/imgs_transition/talking", mouthFrames);
     
     ttsActive = false;
     lastBlinkTime = std::chrono::system_clock::now();
@@ -98,14 +98,14 @@ cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
 
 cv::Mat VideoSynchronizer::getCurrentMouthFrame()
 {
-    if (!ttsActive) return mouthClosedImg;
+    if (!ttsActive) return mouthOpenImg;
 
     auto currentTime = std::chrono::system_clock::now();
     double secondsSinceEpoch = std::chrono::duration<double>(currentTime.time_since_epoch()).count();
     double timeInCycle = std::fmod(secondsSinceEpoch, mouthCycleTime) / mouthCycleTime;
 
     int frameCount = static_cast<int>(mouthFrames.size());
-    if (frameCount == 0) return mouthClosedImg; 
+    if (frameCount == 0) return mouthOpenImg; 
 
     if (timeInCycle < openingEnd) 
     {
@@ -117,7 +117,7 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
     }
     else if (timeInCycle < holdOpenEnd) 
     {
-        return mouthOpenImg;
+        return mouthClosedImg;
     }
     else if (timeInCycle < closingEnd)
     {
@@ -127,7 +127,7 @@ cv::Mat VideoSynchronizer::getCurrentMouthFrame()
         frameIdx = std::min(std::max(frameIdx, 0), frameCount - 1);
         return mouthFrames[frameIdx];
     }
-    return mouthClosedImg;
+    return mouthOpenImg;
 }
 
 double VideoSynchronizer::easeInOut(double x)
