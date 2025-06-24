@@ -38,14 +38,19 @@ private:
     std::vector<cv::Mat> eyesFrames;
     std::vector<cv::Mat> mouthFrames;
 
-    const double mouthCycleTime = (0.6 * 2) + 0.2 + 0.2; // transition*2 + hold_open + hold_closed
-    const double openingEnd = 0.6 / mouthCycleTime; //transition / mouthCycleTime;
-    const double holdOpenEnd = (0.6 + 0.2) / mouthCycleTime; //(transition + holdOpen) / mouthCycleTime;
-    const double closingEnd = (0.6 * 2) / mouthCycleTime; //(transition*2 + holdOpen) / mouthCycleTime;
+    const double mouthCycleTime = 1.25;
+    const double openingEnd = 0.3;
+    const double holdOpenEnd = 0.6;
+    const double closingEnd = 0.8;
     
     bool ttsActive;
     std::chrono::time_point<std::chrono::system_clock> lastBlinkTime;
+    std::chrono::time_point<std::chrono::system_clock> blinkStartTime;
+    bool isBlinking;
+    
     const double BLINK_INTERVAL = 8.0;
+    const double BLINK_DURATION = 0.4;
+    
     bool running;
     cv::Mat currentFrame;
     std::mutex frameMutex;

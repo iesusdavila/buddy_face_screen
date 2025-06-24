@@ -19,6 +19,8 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
     
     ttsActive = false;
     lastBlinkTime = std::chrono::system_clock::now();
+    isBlinking = false;
+    blinkStartTime = std::chrono::system_clock::now();
     running = true;
     
     ttsSubscription = this->create_subscription<std_msgs::msg::Bool>(
@@ -30,7 +32,7 @@ VideoSynchronizer::VideoSynchronizer() : Node("face_screen")
     
     renderThread = std::thread(&VideoSynchronizer::renderLoop, this);
     
-    RCLCPP_INFO(this->get_logger(), "Video Synchronizer iniciado");
+    RCLCPP_INFO(this->get_logger(), "Initialized Video Synchronizer Node");
 }
 
 VideoSynchronizer::~VideoSynchronizer()
@@ -42,20 +44,33 @@ void VideoSynchronizer::loadFrames(const std::string& framesDir, std::vector<cv:
 {
     frames.clear();
     
+    std::vector<std::string> filenames;
     for (const auto& entry : fs::directory_iterator(framesDir))
     {
         if (entry.path().extension() == ".png" && entry.path().filename().string().find("frame_") != std::string::npos)
         {
-            cv::Mat frame = cv::imread(entry.path().string(), cv::IMREAD_UNCHANGED);
+            filenames.push_back(entry.path().string());
+        }
+    }
+    
+    std::sort(filenames.begin(), filenames.end());
+    
+    for (const auto& filename : filenames)
+    {
+        cv::Mat frame = cv::imread(filename, cv::IMREAD_UNCHANGED);
+        if (!frame.empty())
+        {
             frames.push_back(std::move(frame));
         }
     }
+    
+    RCLCPP_INFO(this->get_logger(), "Loaded %zu frames from %s", frames.size(), framesDir.c_str());
 }
 
 void VideoSynchronizer::audioPlayingCallback(const std_msgs::msg::Bool::SharedPtr msg)
 {
     ttsActive = msg->data;
-    RCLCPP_INFO(this->get_logger(), "TTS estado: %s", ttsActive ? "activo" : "inactivo");
+    RCLCPP_INFO(this->get_logger(), "TTS estado: %s", ttsActive ? "active" : "inactive");
 }
 
 std::string VideoSynchronizer::getEyesState()
@@ -63,15 +78,26 @@ std::string VideoSynchronizer::getEyesState()
     auto currentTime = std::chrono::system_clock::now();
     double timeSinceLastBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
     
-    if (timeSinceLastBlink >= BLINK_INTERVAL)
+    if (!isBlinking && timeSinceLastBlink >= BLINK_INTERVAL)
     {
+        isBlinking = true;
+        blinkStartTime = currentTime;
         lastBlinkTime = currentTime;
         return "blinking";
     }
     
-    if (timeSinceLastBlink < 0.5)
+    if (isBlinking)
     {
-        return "blinking";
+        double timeInBlink = std::chrono::duration<double>(currentTime - blinkStartTime).count();
+        if (timeInBlink < BLINK_DURATION)
+        {
+            return "blinking";
+        }
+        else
+        {
+            isBlinking = false;
+            return "open";
+        }
     }
     
     return "open";
@@ -79,95 +105,138 @@ std::string VideoSynchronizer::getEyesState()
 
 cv::Mat VideoSynchronizer::getCurrentEyeFrame(const std::string& eyesState)
 {
-    if (eyesState == "open") return eyesOpenImg;
+    if (eyesState == "open" || eyesFrames.empty()) 
+    {
+        return eyesOpenImg;
+    }
     
     auto currentTime = std::chrono::system_clock::now();
-    double timeInBlink = std::chrono::duration<double>(currentTime - lastBlinkTime).count();
-    int fps = 60;
-    int frameCount = static_cast<int>(eyesFrames.size());
-
-    double blinkDuration = eyesFrames.size() * 1.25 / fps; 
-    if (timeInBlink >= blinkDuration) return eyesOpenImg;
+    double timeInBlink = std::chrono::duration<double>(currentTime - blinkStartTime).count();
     
-    double progress = std::max(0.0, std::min(timeInBlink / blinkDuration, 1.0));
-    int frameIdx = static_cast<int>(
-        (progress < 0.5 ? progress * 2 : 2.0 - progress * 2) * (eyesFrames.size() - 1)
-    );
+    if (timeInBlink >= BLINK_DURATION)
+    {
+        return eyesOpenImg;
+    }
+    
+    double progress = timeInBlink / BLINK_DURATION;
+    progress = std::max(0.0, std::min(progress, 1.0));
+    
+    double animationProgress;
+    if (progress < 0.5)
+    {
+        animationProgress = progress * 2.0;
+    }
+    else
+    {
+        animationProgress = 2.0 - (progress * 2.0);
+    }
+    
+    animationProgress = easeInOut(animationProgress);
+    
+    int frameIdx = static_cast<int>(animationProgress * (eyesFrames.size() - 1));
+    frameIdx = std::max(0, std::min(frameIdx, static_cast<int>(eyesFrames.size() - 1)));
+    
     return eyesFrames[frameIdx];
 }
 
 cv::Mat VideoSynchronizer::getCurrentMouthFrame()
 {
-    if (!ttsActive) return mouthOpenImg;
+    if (!ttsActive || mouthFrames.empty()) 
+    {
+        return mouthOpenImg;
+    }
 
     auto currentTime = std::chrono::system_clock::now();
     double secondsSinceEpoch = std::chrono::duration<double>(currentTime.time_since_epoch()).count();
-    double timeInCycle = std::fmod(secondsSinceEpoch, mouthCycleTime) / mouthCycleTime;
+    double timeInCycle = std::fmod(secondsSinceEpoch, mouthCycleTime);
+    double cycleProgress = timeInCycle / mouthCycleTime;
 
     int frameCount = static_cast<int>(mouthFrames.size());
-    if (frameCount == 0) return mouthOpenImg; 
-
-    if (timeInCycle < openingEnd) 
+    
+    if (cycleProgress < openingEnd) 
     {
-        double phaseProgress = timeInCycle / openingEnd;
+        double phaseProgress = cycleProgress / openingEnd;
         double smoothProgress = easeInOut(phaseProgress);
         int frameIdx = static_cast<int>(smoothProgress * (frameCount - 1));
         frameIdx = std::min(frameIdx, frameCount - 1);
         return mouthFrames[frameIdx];
     }
-    else if (timeInCycle < holdOpenEnd) 
+    else if (cycleProgress < holdOpenEnd) 
     {
         return mouthClosedImg;
     }
-    else if (timeInCycle < closingEnd)
+    else if (cycleProgress < closingEnd)
     {
-        double phaseProgress = (timeInCycle - holdOpenEnd) / (closingEnd - holdOpenEnd);
+        double phaseProgress = (cycleProgress - holdOpenEnd) / (closingEnd - holdOpenEnd);
         double smoothProgress = easeInOut(phaseProgress);
-        int frameIdx = static_cast<int>((1 - smoothProgress) * (frameCount - 1));
-        frameIdx = std::min(std::max(frameIdx, 0), frameCount - 1);
+        int frameIdx = static_cast<int>((1.0 - smoothProgress) * (frameCount - 1));
+        frameIdx = std::max(0, std::min(frameIdx, frameCount - 1));
         return mouthFrames[frameIdx];
     }
-    return mouthOpenImg;
+    else
+    {
+        return mouthOpenImg;
+    }
 }
 
 double VideoSynchronizer::easeInOut(double x)
 {
-    return (x < 0.5) ? (2 * x * x) : (1 - std::pow(-2 * x + 2, 2) / 2);
+    return x < 0.5 ? 2 * x * x : 1 - std::pow(-2 * x + 2, 2) / 2;
 }
 
-cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat& mouthFrame) {
+cv::Mat VideoSynchronizer::combineFrames(const cv::Mat& eyesFrame, const cv::Mat& mouthFrame) 
+{
+    if (eyesFrame.empty() || mouthFrame.empty())
+    {
+        RCLCPP_WARN(this->get_logger(), "Empty frame detected");
+        return eyesFrame.empty() ? mouthFrame : eyesFrame;
+    }
+    
     cv::Mat result;
-    cv::addWeighted(eyesFrame, 1.0, mouthFrame, 1.0, 0.0, result); 
+    if (eyesFrame.size() != mouthFrame.size())
+    {
+        cv::Mat mouthResized;
+        cv::resize(mouthFrame, mouthResized, eyesFrame.size());
+        cv::addWeighted(eyesFrame, 1.0, mouthResized, 1.0, 0.0, result);
+    }
+    else
+    {
+        cv::addWeighted(eyesFrame, 1.0, mouthFrame, 1.0, 0.0, result);
+    }
+    
     return result;
 }
 
 void VideoSynchronizer::renderLoop()
 {
-    std::lock_guard<std::mutex> lock(frameMutex);
-    rclcpp::Rate rate(30); 
+    rclcpp::Rate rate(30);
     
     while (running && rclcpp::ok())
     {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        
         std::string eyesState = getEyesState();
         cv::Mat eyesFrame = getCurrentEyeFrame(eyesState);
         cv::Mat mouthFrame = getCurrentMouthFrame();
         
         cv::Mat combinedFrame = combineFrames(eyesFrame, mouthFrame);
+        
+        if (!combinedFrame.empty())
+        {
+            try
+            {
+                sensor_msgs::msg::Image::SharedPtr imgMsg = cv_bridge::CvImage(
+                    std_msgs::msg::Header(), "bgra8", combinedFrame).toImageMsg();
                 
-        try
-        {
-            sensor_msgs::msg::Image::SharedPtr imgMsg = cv_bridge::CvImage(
-                std_msgs::msg::Header(), "bgra8", combinedFrame).toImageMsg();
-            
-            imgMsg->header.stamp = this->now();
-            imgMsg->header.frame_id = "face_frame";
-            
-            faceScreenPublisher->publish(*imgMsg);
-            RCLCPP_INFO(this->get_logger(), "Frame publicado en face_screen");
-        }
-        catch (const std::exception& e)
-        {
-            RCLCPP_INFO(this->get_logger(), "Error al publicar imagen: %s", e.what());
+                imgMsg->header.stamp = this->now();
+                imgMsg->header.frame_id = "face_frame";
+                
+                faceScreenPublisher->publish(*imgMsg);
+            }
+            catch (const std::exception& e)
+            {
+                RCLCPP_ERROR(this->get_logger(), "Error to convert OpenCV image to ROS message: %s", e.what());
+            }
         }
         
         rate.sleep();
