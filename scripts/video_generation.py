@@ -3,7 +3,6 @@ import numpy as np
 from united_morph_transition import MorphTransition
 from moviepy import ImageClip, concatenate_videoclips
 import os
-from ament_index_python import get_package_share_directory
 
 def save_frames_to_folder(frames, output_frames_dir):
     if not os.path.exists(output_frames_dir):
@@ -67,15 +66,13 @@ def generate_eye_transition(dir_init_img, dir_final_img, points_init_img, points
 
     concatenate_videoclips(clips, method="compose")
 
-path_pkg = get_package_share_directory('coco_face_screen')
+init_img = os.path.join("imgs", "open_mouth.png")
+final_img = os.path.join("imgs", "close_mouth.png")
 
-init_img = os.path.join(path_pkg, "imgs", "open_mouth.png")
-final_img = os.path.join(path_pkg, "imgs", "close_mouth.png")
+points_init_img = os.path.join("points", "open_mouth.txt")
+points_final_img = os.path.join("points", "close_mouth.txt")
 
-points_init_img = os.path.join(path_pkg,"points","open_mouth.txt")
-points_final_img = os.path.join(path_pkg,"points","close_mouth.txt")
-
-folder_frames = "../imgs_transition/talking"
+folder_frames = "imgs_transition/talking"
 
 if not os.path.exists(points_init_img):
     generate_checkpoints(init_img, points_init_img)
