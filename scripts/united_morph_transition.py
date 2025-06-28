@@ -27,7 +27,7 @@ class MorphTransition:
                     x, y = map(int, line.strip().split(','))
                     points_dst.append((x, y))
         except Exception as e:
-            print(f"Error al leer los archivos: {e}")
+            print(f"Error reading points from file: {e}")
         return np.array(points_src), np.array(points_dst)
 
     def linear_interpolation(self, src_points, dst_points, t):
@@ -167,19 +167,15 @@ class MorphTransition:
         src_image = cv2.imread(self.src_image_path, cv2.IMREAD_UNCHANGED)
 
         if src_image is None:
-            print(f"Error: No se pudo cargar la imagen {self.src_image_path}. Verifica la ruta.")
+            print(f"Error: Don't load the image {self.src_image_path}. Check the path.")
         else:
-            print(f"Imagen {self.src_image_path} cargada exitosamente.")
-
             src_image = cv2.cvtColor(src_image, cv2.COLOR_BGRA2RGBA)
             
             dst_image = cv2.imread(self.dst_image_path, cv2.IMREAD_UNCHANGED)
 
             if dst_image is None:
-                print(f"Error: No se pudo cargar la imagen {self.dst_image_path}. Verifica la ruta.")
+                print(f"Error: Don't load the image {self.dst_image_path}. Check the path.")
             else:
-                print(f"Imagen {self.dst_image_path} cargada exitosamente.")
-
                 dst_image = cv2.cvtColor(dst_image, cv2.COLOR_BGRA2RGBA)
 
                 src_points, dst_points = self.read_points_from_file()
@@ -189,7 +185,7 @@ class MorphTransition:
                 
                 for i in range(1, self.num_images + 1 ):
                     t = i / (self.num_images + 1)  
-                    print(f"Generando imagen para t = {t}")
+                    print(f"Generating frame {i}/{self.num_images} with t={t:.2f}")
                     
                     interpolated_points_1 = self.linear_interpolation(src_points, dst_points, t)
                     interpolated_points_2 = self.linear_interpolation(dst_points, src_points, t)
