@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from united_morph_transition import MorphTransition
-from moviepy import ImageClip, concatenate_videoclips
 import os
 
 def save_frames_to_folder(frames, output_frames_dir):
@@ -53,18 +52,6 @@ def generate_eye_transition(dir_init_img, dir_final_img, points_init_img, points
 
     if folder_frames is not None:
         save_frames_to_folder(frames_transition, folder_frames)
-
-    frame_duration = 1/fps
-
-    clips = [
-        ImageClip(np.array(init_img), duration=exposure_time*3),  
-        *[ImageClip(np.array(frame), duration=frame_duration) for frame in frames_transition],  
-        ImageClip(np.array(final_img), duration=exposure_time*0.75),  
-        *[ImageClip(np.array(frame), duration=frame_duration) for frame in reversed(frames_transition)],
-        ImageClip(np.array(init_img), duration=exposure_time*3),  
-    ]
-
-    concatenate_videoclips(clips, method="compose")
 
 init_img = os.path.join("imgs", "open_mouth.png")
 final_img = os.path.join("imgs", "close_mouth.png")
